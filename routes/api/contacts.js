@@ -37,16 +37,17 @@ router.get('/:contactId', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   const { error } = addSchema.validate(req.body);
-  const { name, email, phone } = req.body;
+  const { name, email, phone, favorite = false } = req.body;
 
   if (error) {
     return res.status(400).json({ message: "missing required name field" });
   }
-  const newContact = await contacts.addContact({ name, email, phone });
+  const newContact = await contacts.addContact({ name, email, phone, favorite });
   res.status(201).json({
     status: "success",
     code: 201,
     data: { newContact },
+    favorite: false,
   });
 
 })
@@ -84,5 +85,23 @@ router.put('/:contactId', async (req, res, next) => {
 
   res.json({ message: 'template message' })
 })
+
+router.patch("/:contactId/favorite", async (req, res, next) => {
+  const { contactId } = req.params;
+  const { favorite: body } = req.body;
+
+  if (body === null) {
+    return res.status(400).json({ message: "missing field favorite" });
+  }
+  const updatedStatus = await contacts.updateStatusContact(contactId, body);
+  if (!updatedStatus) {
+    return res.status(404).json({ message: "Not found" });
+  }
+  res.json({
+    status: "success",
+    code: 200,
+    data: { updatedStatus },
+  });
+});
 
 module.exports = router
