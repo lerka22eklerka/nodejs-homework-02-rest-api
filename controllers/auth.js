@@ -42,10 +42,14 @@ const login = async(req, res)=> {
 
     const token = jwt.sign(payload, SECRET_KEY, {expiresIn: "23h"})
 
-    res.json({
+    await User.updateOne({ email }, { token })
+    
+     res.json({
         token, 
+       subscription: user.subscription,
         email: user.email,
     })
+
 }
 
 
