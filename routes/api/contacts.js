@@ -12,7 +12,8 @@ const addSchema = Joi.object({
 const router = express.Router()
 
 router.get('/', authenticate, async (req, res, next) => {
-  const contactList = await contacts.listContacts();
+   const {_id} = req.user;
+  const contactList = await contacts.listContacts(_id);
   res.json({
     status: "success",
     code: 200,
