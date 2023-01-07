@@ -12,8 +12,10 @@ const addSchema = Joi.object({
 const router = express.Router()
 
 router.get('/', authenticate, async (req, res, next) => {
+  const {page = 1, limit = 20} = req.query;
+  const skip = (page - 1) * limit;
    const {_id} = req.user;
-  const contactList = await contacts.listContacts(_id);
+  const contactList = await contacts.listContacts(_id, skip, limit);
   res.json({
     status: "success",
     code: 200,
