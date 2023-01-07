@@ -1,17 +1,22 @@
 const {Contact} = require('../models/contactModel')
 
-const listContacts = async () => {
+const listContacts = async (req, res, next) => {
   try {
-  const contacts = await Contact.find({});
+    const {_id: owner} = req.user;
+    const contacts = await Contact.find({owner});
+    console.log(req.user);
   return contacts;
   } catch(err) {
 console.log(err);
   }
 }
 
-const getContactById = async (contactId) => {
+const getContactById = async (req, res, next) => {
   try {
-  const response = Contact.findById(contactId);
+    const { contactId } = req.body;
+     const {_id: owner} = req.user;
+    const user = await Contact.find(owner);
+  const response = user.filter(contact => contact._id === contactId );
   if (!response) {
     return null;
   }
@@ -30,9 +35,9 @@ const removeContact = async (contactId) => {
   }
 }
 
-const addContact = async ({ name, email, phone }) => {
+const addContact = async ({ name, email, phone, favorite, owner }) => {
   try {
-    const newContact = new Contact({ name, email, phone });
+    const newContact = new Contact({ name, email, phone, favorite, owner });
     await newContact.save();
     return newContact;
   } catch (err) {
