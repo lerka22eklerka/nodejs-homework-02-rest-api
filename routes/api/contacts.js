@@ -1,6 +1,7 @@
 const express = require('express')
-const contacts = require("../../models/contacts.js")
+const contacts = require("../../controllers/contacts.js")
 const Joi = require("joi");
+const authenticate = require("../../middlewares/authenticate")
 
 const addSchema = Joi.object({
   name: Joi.string().required(),
@@ -10,8 +11,11 @@ const addSchema = Joi.object({
 
 const router = express.Router()
 
-router.get('/', async (req, res, next) => {
-  const contactList = await contacts.listContacts();
+router.get('/', authenticate, async (req, res, next) => {
+  const {page = 1, limit = 20} = req.query;
+  const skip = (page - 1) * limit;
+   const {_id} = req.user;
+  const contactList = await contacts.listContacts(_id, skip, limit);
   res.json({
     status: "success",
     code: 200,
@@ -21,7 +25,7 @@ router.get('/', async (req, res, next) => {
   });
 })
 
-router.get('/:contactId', async (req, res, next) => {
+router.get('/:contactId', authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   const contact = await contacts.getContactById(contactId);
   if (!contact) {
@@ -35,24 +39,25 @@ router.get('/:contactId', async (req, res, next) => {
   });
 })
 
-router.post('/', async (req, res, next) => {
+router.post('/', authenticate, async (req, res, next) => {
   const { error } = addSchema.validate(req.body);
   const { name, email, phone, favorite = false } = req.body;
+  const {_id: owner} = req.user;
 
   if (error) {
     return res.status(400).json({ message: "missing required name field" });
   }
-  const newContact = await contacts.addContact({ name, email, phone, favorite });
+  
+  const newContact = await contacts.addContact({ name, email, phone, favorite, owner });
   res.status(201).json({
     status: "success",
     code: 201,
     data: { newContact },
-    favorite: false,
   });
 
 })
 
-router.delete('/:contactId', async (req, res, next) => {
+router.delete('/:contactId', authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   const deletedContact = await contacts.removeContact(contactId);
   if (!deletedContact) {
@@ -61,7 +66,7 @@ router.delete('/:contactId', async (req, res, next) => {
   res.status(200).json({ message: "contact deleted" });
 })
 
-router.put('/:contactId', async (req, res, next) => {
+router.put('/:contactId', authenticate, async (req, res, next) => {
   const { error } = addSchema.validate(req.body);
   const { name, email, phone } = req.body;
   const { contactId } = req.params;
@@ -86,7 +91,7 @@ router.put('/:contactId', async (req, res, next) => {
   res.json({ message: 'template message' })
 })
 
-router.patch("/:contactId/favorite", async (req, res, next) => {
+router.patch("/:contactId/favorite", authenticate, async (req, res, next) => {
   const { contactId } = req.params;
   const { favorite: body } = req.body;
 
