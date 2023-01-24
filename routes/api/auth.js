@@ -9,6 +9,8 @@ const {schemas} = require("../../models/user")
 const router = express.Router();
 
 router.post("/signup", ctrl.signup)
+router.get("/verify/:verificationToken", ctrl.verify);
+router.post("/verify", ctrl.reSendingEmail)
 router.post("/login", ctrl.login)
 router.get("/current", authenticate, ctrl.getCurrent);
 router.get("/logout", authenticate, ctrl.logout);
